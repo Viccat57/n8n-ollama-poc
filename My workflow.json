@@ -1,0 +1,208 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ticket-urgency",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -192,
+        -64
+      ],
+      "id": "7827af4f-1a14-443a-bd94-80e6b17f4f7d",
+      "name": "Webhook",
+      "webhookId": "e7562bfe-e4e4-4804-ac62-64db2fac7e9b"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen2.5-coder:7b\",\n  \"prompt\": \"Eres un asistente de mantenimiento inmobiliario. Lee el siguiente mensaje del huésped. Si el mensaje menciona fugas de agua, fuego, humo, cerraduras rotas, fallas eléctricas, electrodomésticos echando chispas/humo, falta de agua o problemas de seguridad personal, responde ÚNICAMENTE con la palabra URGENTE. Si menciona wifi, limpieza, basura o dudas generales, responde ÚNICAMENTE con la palabra NORMAL. Ante la más mínima duda sobre la seguridad del huésped o de la propiedad, clasifícalo como URGENTE. Mensaje: {{$json.body.mensaje}}\",\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -16,
+        -64
+      ],
+      "id": "0e14c32e-6d42-4980-9b62-bac433ec02fd",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.response }}",
+                    "rightValue": "URGENTE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "79f9f1e1-82ab-4086-9a03-7ee55868289a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "URGENTE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bee1deac-2941-4bc0-a09f-e3a9cacda1bf",
+                    "leftValue": "={{ $json.response }}",
+                    "rightValue": "NORMAL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NORMAL"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        -64
+      ],
+      "id": "38014748-3e9c-45de-970f-eac2f22c4545",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "fromEmail": "tucorreo@example.com",
+        "toEmail": "correo_destinatario@example.com",
+        "subject": "={{ $json.response }}",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e74c3c; border-radius: 8px; overflow: hidden;\">\n  \n  <div style=\"background-color: #e74c3c; padding: 20px; text-align: center;\">\n    <h2 style=\"color: #ffffff; margin: 0; font-size: 20px;\">⚠️ Nuevo Mensaje URGENTE de Huésped</h2>\n  </div>\n\n  \n  <div style=\"padding: 20px 20px 0 20px; background-color: #f8f9fa;\">\n    <p style=\"margin: 0 0 10px 0; color: #333;\"><strong>Propiedad:</strong> {{ $('Webhook').item.json.body.propiedad }} </p>\n    <p style=\"margin: 0 0 20px 0; color: #333;\"><strong>Huésped:</strong> {{ $('Webhook').item.json.body.huesped }}</p>\n  </div>\n\n\n  <div style=\"padding: 20px;\">\n    <p style=\"margin-top: 0; color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;\">Mensaje:</p>\n    <div style=\"background-color: #fdf5f5; padding: 15px; border-left: 4px solid #e74c3c; border-radius: 4px; color: #2c3e50; font-size: 16px; line-height: 1.5;\">\n     {{ $('Webhook').item.json.body.mensaje }}\n    </div>\n  </div>\n\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        400,
+        -160
+      ],
+      "id": "34be69e3-0aaa-4d35-859e-975ca2faa6f0",
+      "name": "Send an Email",
+      "webhookId": "e8448a0f-4e2e-4175-aa90-faf6b22b40fc",
+      "credentials": {
+        "smtp": {
+          "id": "ppicctzy0zCeAHAt",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "tucorreo@example.com",
+        "toEmail": "correo_destinatario@example.com",
+        "subject": "={{ $('HTTP Request').item.json.response }}",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;\">\n  \n  <div style=\"background-color: #2c3e50; padding: 20px; text-align: center;\">\n    <h2 style=\"color: #ffffff; margin: 0; font-size: 20px;\">Nuevo Mensaje de Huésped</h2>\n  </div>\n\n  \n  <div style=\"padding: 20px 20px 0 20px; background-color: #f8f9fa;\">\n    <p style=\"margin: 0 0 10px 0; color: #333;\"><strong>Propiedad:</strong>{{ $('Webhook').item.json.body.propiedad }} </p>\n    <p style=\"margin: 0 0 20px 0; color: #333;\"><strong>Huésped:</strong> {{ $('Webhook').item.json.body.huesped }}</p>\n  </div>\n\n\n  <div style=\"padding: 20px;\">\n    <p style=\"margin-top: 0; color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;\">Mensaje:</p>\n    <div style=\"background-color: #f1f4f8; padding: 15px; border-left: 4px solid #3498db; border-radius: 4px; color: #2c3e50; font-size: 16px; line-height: 1.5;\">\n     {{ $('Webhook').item.json.body.mensaje }}\n    </div>\n  </div>\n\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        400,
+        32
+      ],
+      "id": "81bfd822-9f14-4069-a6b6-68b1b6c5f745",
+      "name": "Send an Email1",
+      "webhookId": "779ea51e-63d6-4bfc-b0d0-f73dc3b68969",
+      "credentials": {
+        "smtp": {
+          "id": "ppicctzy0zCeAHAt",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ceb8bf5c-ba49-4beb-86d6-006cc1a8295d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8d247b2a3912a65263ad5356118630e908f51bf79e3824fad00c0cb73d2a483c"
+  },
+  "nodeGroups": [],
+  "id": "QepO41XmCsdiyBph",
+  "tags": []
+}
