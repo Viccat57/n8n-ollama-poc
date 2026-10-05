@@ -36,6 +36,6 @@ Para simular la llegada de un reporte, dispara una petición POST hacia tu insta
   "ticket_id": "TKT-0001",
   "propiedad": "Loft Acueducto",
   "huesped": "Juan P.",
-  "mensaje": "Es normal que el microondas esté echando humo?"
+  "mensaje": "La tubería de la cocina se reventó y el agua está llegando a la sala."
 }
 ```
